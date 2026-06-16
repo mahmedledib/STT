@@ -1,4 +1,4 @@
-name = "stt-platform"
+name = "stt"
 main = "src/index.js"
 compatibility_date = "2025-01-01"
 
