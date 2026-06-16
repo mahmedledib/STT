@@ -1,0 +1,22 @@
+name = "stt-platform"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# D1 database binding. Create it with:
+#   wrangler d1 create stt-platform-db
+# then paste the returned database_id below.
+[[d1_databases]]
+binding = "DB"
+database_name = "stt-platform-db"
+database_id = "2822a5b0-e602-4ab8-aebc-c812265c0a9e"
+
+# No secrets here on purpose: GOOGLE_CLIENT_ID / SECRET / REFRESH_TOKEN and the
+# AssemblyAI key are stored in the D1 `config` table and entered from the
+# Super-Admin dashboard, so they can be rotated without redeploying.
+
+[vars]
+# Comma-separated list of allowed front-end origins for CORS.
+# Add your Pages URLs once deployed, e.g.
+#   "https://stt-app.pages.dev,https://stt-admin.pages.dev"
+# Use "*" during local testing.
+ALLOWED_ORIGINS = "*"

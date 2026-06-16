@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>Collecte vocale médicale</title>
+<style>
+:root{
+  --bg:#F4F8F9;--surface:#fff;--ink:#16262E;--muted:#5E747D;--line:#E1EAED;
+  --primary:#0E7C86;--primary-d:#0A5E66;--primary-soft:#E3F2F2;
+  --green:#2E8B7B;--green-soft:#E5F3EF;--danger:#C2453B;--danger-soft:#FBEAE8;
+  --radius:14px;--tap:54px;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans Arabic",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.fr{direction:ltr;text-align:left;unicode-bidi:isolate}
+button{font-family:inherit;font-size:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit;font-size:17px}
+.hidden{display:none !important}
+#app{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+.screen{flex:1;display:flex;flex-direction:column;padding:20px 18px 100px}
+.center{justify-content:center;padding-bottom:20px}
+.topbar{position:sticky;top:0;z-index:30;background:var(--surface);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:10px;padding:12px 16px;min-height:58px}
+.topbar h1{font-size:17px;margin:0;font-weight:650;flex:1}
+.iconbtn{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;position:relative;flex-shrink:0}
+.iconbtn:active{background:var(--primary-soft)}
+.dot{position:absolute;top:8px;inset-inline-end:8px;min-width:18px;height:18px;border-radius:9px;
+  background:var(--danger);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+.tabbar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--line);
+  display:flex;max-width:560px;margin:0 auto;z-index:30}
+.tabbar button{flex:1;padding:10px 4px 14px;color:var(--muted);font-size:13px;font-weight:600;
+  display:flex;flex-direction:column;align-items:center;gap:4px;position:relative}
+.tabbar button.active{color:var(--primary)}
+.tabbadge{position:absolute;top:6px;inset-inline-end:14px;background:var(--green);color:#fff;
+  font-size:11px;font-weight:700;border-radius:9px;min-width:18px;height:18px;display:grid;place-items:center;padding:0 4px}
+.subtabs{display:flex;gap:8px;background:var(--primary-soft);padding:5px;border-radius:12px;margin-bottom:18px}
+.subtabs button{flex:1;padding:11px;border-radius:9px;font-weight:650;color:var(--primary-d);position:relative}
+.subtabs button.active{background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.step{font-size:11px;color:var(--muted);font-weight:600;display:block}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:var(--tap);
+  border-radius:12px;font-weight:650;background:var(--primary);color:#fff;padding:0 16px}
+.btn:active{background:var(--primary-d)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.btn.secondary{background:var(--surface);color:var(--primary-d);border:1.5px solid var(--primary)}
+.btn.ghost{background:transparent;color:var(--muted)}
+.btn.danger{background:var(--danger);color:#fff}
+.btn.sm{min-height:44px;font-size:15px}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+label{display:block;font-size:14px;font-weight:600;color:var(--muted);margin:14px 0 6px}
+.field{width:100%;min-height:var(--tap);border:1.5px solid var(--line);border-radius:12px;padding:0 14px;background:var(--surface)}
+.field:focus{outline:none;border-color:var(--primary)}
+textarea.field{min-height:120px;padding:12px 14px;resize:vertical;line-height:1.5}
+.title{font-size:24px;font-weight:700;margin:6px 0 4px}
+.sub{color:var(--muted);margin:0 0 18px}
+.muted{color:var(--muted)}
+.elements{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 4px}
+.element{background:var(--green-soft);color:#1d5a4f;border:1px solid #cfe7df;border-radius:12px;
+  padding:14px 16px;font-size:20px;font-weight:600;direction:ltr;unicode-bidi:isolate}
+.rec-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;padding:10px 0}
+.recbtn{width:96px;height:96px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center}
+.recbtn.recording{background:var(--danger);animation:pulse 1.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(194,69,59,.45)}70%{box-shadow:0 0 0 18px rgba(194,69,59,0)}100%{box-shadow:0 0 0 0 rgba(194,69,59,0)}}
+.timer{font-variant-numeric:tabular-nums;font-size:22px;font-weight:650}
+audio{width:100%;margin-top:6px}
+.flag-row{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--line);
+  border-radius:12px;margin-bottom:8px;cursor:pointer}
+.flag-row.on{border-color:var(--primary);background:var(--primary-soft)}
+.flag-row.red.on{border-color:var(--danger);background:var(--danger-soft)}
+.flag-row input[type=checkbox]{width:22px;height:22px;accent-color:var(--primary);flex-shrink:0}
+.slide{flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;gap:14px;padding:20px}
+.slide .emoji{font-size:56px}
+.dots{display:flex;gap:8px;justify-content:center;margin:18px 0}
+.dots i{width:8px;height:8px;border-radius:4px;background:var(--line);display:inline-block}
+.dots i.active{background:var(--primary);width:22px}
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:12px 18px;border-radius:12px;font-size:15px;z-index:60;opacity:0;transition:.25s;max-width:90%;text-align:center;pointer-events:none}
+#toast.show{opacity:1}
+#celebrate{position:fixed;inset:0;background:rgba(14,124,134,.96);color:#fff;z-index:70;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;gap:14px}
+#celebrate .big{font-size:64px;animation:pop .5s}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:40}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:var(--surface);
+  border-radius:20px 20px 0 0;z-index:50;padding:10px 16px 28px;max-height:85vh;overflow-y:auto}
+.sheet .handle{width:40px;height:4px;background:var(--line);border-radius:2px;margin:6px auto 14px}
+.listitem{padding:14px 4px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:center;width:100%;text-align:start}
+.listitem:last-child{border-bottom:none}
+.note{background:var(--green-soft);border:1px solid #cfe7df;border-radius:12px;padding:12px 14px;font-size:14px;color:#1d5a4f}
+.err{background:var(--danger-soft);border:1px solid #f0c8c4;color:#922;border-radius:12px;padding:12px 14px;font-size:14px;margin:8px 0}
+.empty{text-align:center;color:var(--muted);padding:40px 10px}
+.progress-row{display:flex;gap:0;border-radius:12px;overflow:hidden;border:1px solid var(--line);margin-bottom:14px}
+.progress-cell{flex:1;padding:14px 12px;background:var(--surface);text-align:center;border-inline-end:1px solid var(--line)}
+.progress-cell:last-child{border-inline-end:none}
+.progress-num{font-size:26px;font-weight:700;color:var(--primary)}
+.progress-lbl{font-size:12px;color:var(--muted);margin-top:2px}
+.langpick{display:flex;flex-direction:column;gap:12px;margin-top:24px}
+.langpick button{min-height:64px;border:1.5px solid var(--line);border-radius:14px;font-size:20px;font-weight:650;background:var(--surface)}
+.langpick button:active{border-color:var(--primary);background:var(--primary-soft)}
+svg{display:block}
+@media(prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+<div id="app"><div id="root"></div></div>
+<div id="toast"></div>
+<script>
+"use strict";
+
+// ──────────────────────────────── CONFIGURATION ───────────────────────────────
+const API_BASE = "https://stt-platform.m-ahmedledib123.workers.dev/api";
+
+// Google Drive folder IDs (read-only from browser; write via Worker upload session)
+const DRIVE = {
+  main:     "PASTE_MAIN_FOLDER_ID",
+  demo:     "PASTE_DEMO_FOLDER_ID",
+  deleted:  "PASTE_DELETED_FOLDER_ID",
+  rejected: "PASTE_REJECTED_FOLDER_ID",
+  trash:    "PASTE_TRASH_FOLDER_ID",
+  // Direct audio URL — the Worker stores drive_file_id; browser fetches it directly from Drive
+  audioUrl: (fileId) => `https://drive.google.com/uc?export=download&id=${fileId}`,
+};
+
+// ──────────────────────────────── i18n ────────────────────────────────────────
+const T = {
+  ar:{dir:"rtl",
+    app:"جمع الأصوات الطبية",chooseLang:"اختر لغة الواجهة",
+    langNote:"المحتوى الطبي والنسخ النصي بالفرنسية دائماً.",
+    arabic:"العربية",french:"Français",
+    login:"تسجيل الدخول",register:"حساب جديد",phone:"رقم الهاتف (واتساب)",
+    password:"كلمة المرور",fullName:"الاسم الكامل",role:"الصفة",
+    doctor:"طبيب",nurse:"ممرض/ة",other:"أخرى",
+    confirmPwd:"تأكيد كلمة المرور",depts:"القسم/الأقسام",otherDept:"قسم آخر",
+    phone8:"رقم الهاتف يجب أن يكون 8 أرقام",pwdMatch:"كلمتا المرور غير متطابقتين",
+    create:"إنشاء الحساب",haveAccount:"دخول",noAccount:"حساب جديد",
+    contributions:"المساهمات",reviews:"المراجعات",record:"تسجيل",transcribe:"كتابة",
+    step1:"الخطوة 1",step2:"الخطوة 2",
+    skip:"لا أعرف كيف أقولها — تخطّي",micTest:"جرّب الميكروفون",
+    startRec:"ابدأ التسجيل",stopRec:"إيقاف",retake:"إعادة",submitAudio:"إرسال التسجيل",
+    recordedPrompt:"تم التسجيل. اكتب الآن أو واصل التسجيل؟",
+    transcribeNow:"اكتب الآن",keepRec:"واصل التسجيل",
+    suggestion:"اقتراح (ذكاء غير مُدرَّب):",useThis:"استخدم هذا",typeMine:"أكتب بنفسي",
+    typeHere:"اكتب ما قيل في التسجيل…",send:"إرسال",noPending:"لا توجد تسجيلات بانتظار الكتابة.",
+    audioFlags:"ملاحظات على الصوت",textFlags:"ملاحظات على النص",
+    submitReview:"إرسال المراجعة",noClips:"لا توجد مساهمات للمراجعة الآن.",
+    myContrib:"مساهماتي",changePwd:"تغيير كلمة المرور",logout:"تسجيل الخروج",
+    edit:"تعديل",save:"حفظ",rejected:"مرفوضة",
+    notifications:"الإشعارات",noNotifs:"لا توجد إشعارات.",
+    next:"التالي",start:"ابدأ",skipIntro:"تخطّي",
+    progress:"تقدّمك",contribLbl:"مساهمات",reviewsLbl:"مراجعات",remainingLbl:"المتبقي اليوم",
+    micDenied:"تم رفض إذن الميكروفون. فعّله من إعدادات المتصفح.",
+    micNone:"لم يُعثر على ميكروفون.",tooShort:"التسجيل قصير جداً.",paused:"هذه الميزة متوقفة مؤقتاً.",
+    offline:"أنت غير متصل بالإنترنت.",oldPwd:"كلمة المرور الحالية",newPwd:"كلمة المرور الجديدة",
+    saved:"تم الحفظ",sent:"تم الإرسال",loading:"جارٍ التحميل…",
+    practiceNote:"تسجيل تجريبي لن يُحفظ.",
+    congrats:"أحسنت! ",targetReached:"اقتربنا أكثر من مساعد صوتي ممتاز.",targetLabel:"الهدف اليومي",
+    nudge:"لديك {n} تسجيلات بانتظار الكتابة — اكتب بعضها؟",
+    slides:[
+      {e:"🎯",t:"لماذا نجمع هذه الأصوات",d:"لبناء مساعد ذكي يفهم الأوامر الطبية ويساعدك أنت."},
+      {e:"🎙️",t:"صوت نقي ← مساعد ذكي",d:"كلما كان التسجيل أوضح، كان المساعد أدق."},
+      {e:"🧭",t:"المسار",d:"سجّل ← اكتب ← راجع. خطوتان بسيطتان ثم مراجعة عمل الآخرين."},
+      {e:"⏭️",t:"يمكنك التخطّي",d:"إن لم تعرف كيف تنطق تركيبة، تخطّاها بكل بساطة."}
+    ],
+    flagLabel:{starts_late:"يبدأ متأخراً",finishes_early:"ينتهي مبكراً",noisy:"ضوضاء",
+      inaudible:"غير مسموع",empty:"فارغ",wrong_language:"لغة خاطئة",multiple_voices:"أصوات متعددة",
+      distorted:"تشويه",free_text:"نص حر",has_error:"خطأ",incomplete:"ناقص",spelling_error:"خطأ إملائي",
+      wrong_element:"عنصر خاطئ",extra_content:"محتوى زائد",wrong_abbreviation:"اختصار خاطئ"}},
+  fr:{dir:"ltr",
+    app:"Collecte vocale médicale",chooseLang:"Choisissez la langue",
+    langNote:"Le contenu médical et les transcriptions sont toujours en français.",
+    arabic:"العربية",french:"Français",
+    login:"Connexion",register:"Nouveau compte",phone:"Téléphone (WhatsApp)",
+    password:"Mot de passe",fullName:"Nom complet",role:"Fonction",
+    doctor:"Médecin",nurse:"Infirmier·ère",other:"Autre",
+    confirmPwd:"Confirmer",depts:"Service(s)",otherDept:"Autre service",
+    phone8:"Le numéro doit comporter 8 chiffres",pwdMatch:"Les mots de passe ne correspondent pas",
+    create:"Créer le compte",haveAccount:"Se connecter",noAccount:"S'inscrire",
+    contributions:"Contributions",reviews:"Révisions",record:"Enregistrer",transcribe:"Transcrire",
+    step1:"Étape 1",step2:"Étape 2",
+    skip:"Je ne sais pas — passer",micTest:"Tester le micro",
+    startRec:"Enregistrer",stopRec:"Arrêter",retake:"Refaire",submitAudio:"Envoyer l'audio",
+    recordedPrompt:"Enregistré. Transcrire maintenant ou continuer ?",
+    transcribeNow:"Transcrire",keepRec:"Continuer",
+    suggestion:"Suggestion (IA non entraînée) :",useThis:"Utiliser",typeMine:"Je tape",
+    typeHere:"Tapez ce qui a été dit…",send:"Envoyer",noPending:"Aucun audio en attente.",
+    audioFlags:"Signalements audio",textFlags:"Signalements texte",
+    submitReview:"Envoyer la révision",noClips:"Aucune contribution à réviser.",
+    myContrib:"Mes contributions",changePwd:"Changer le mot de passe",logout:"Déconnexion",
+    edit:"Modifier",save:"Enregistrer",rejected:"Rejetée",
+    notifications:"Notifications",noNotifs:"Aucune notification.",
+    next:"Suivant",start:"Commencer",skipIntro:"Passer",
+    progress:"Votre progression",contribLbl:"contributions",reviewsLbl:"révisions",remainingLbl:"restant aujourd'hui",
+    micDenied:"Micro refusé. Activez-le dans les réglages du navigateur.",
+    micNone:"Aucun micro détecté.",tooShort:"Enregistrement trop court.",paused:"Cette fonction est en pause.",
+    offline:"Vous êtes hors ligne.",oldPwd:"Mot de passe actuel",newPwd:"Nouveau mot de passe",
+    saved:"Enregistré",sent:"Envoyé",loading:"Chargement…",
+    practiceNote:"Essai — non enregistré.",
+    congrats:"Bravo ! ",targetReached:"Nous voilà plus proches d'un excellent assistant vocal.",targetLabel:"Objectif du jour",
+    nudge:"Vous avez {n} audio(s) en attente — transcrire ?",
+    slides:[
+      {e:"🎯",t:"Pourquoi ces enregistrements",d:"Pour bâtir un assistant qui comprend les ordres médicaux et vous aide."},
+      {e:"🎙️",t:"Audio propre → assistant fiable",d:"Plus l'enregistrement est clair, plus l'assistant est précis."},
+      {e:"🧭",t:"Le parcours",d:"Enregistrer → Transcrire → Réviser."},
+      {e:"⏭️",t:"Vous pouvez passer",d:"Si vous ne savez pas dire une combinaison, passez-la."}
+    ],
+    flagLabel:{starts_late:"Début coupé",finishes_early:"Fin coupée",noisy:"Bruité",
+      inaudible:"Inaudible",empty:"Vide",wrong_language:"Mauvaise langue",multiple_voices:"Plusieurs voix",
+      distorted:"Saturé",free_text:"Texte libre",has_error:"Erreur",incomplete:"Incomplet",
+      spelling_error:"Faute",wrong_element:"Mauvais élément",extra_content:"Contenu en trop",
+      wrong_abbreviation:"Abréviation"}}
+};
+
+let LANG = localStorage.getItem("lang") || "ar";
+const t = k => T[LANG][k] ?? k;
+const fl = code => T[LANG].flagLabel[code] || code;
+
+// ──────────────────────────────── STATE ───────────────────────────────────────
+const S = {
+  token: localStorage.getItem("token") || null,
+  user:  JSON.parse(localStorage.getItem("user") || "null"),
+  tab: "contrib", sub: "record",
+  combo: null, queue: [],
+  recBlob: null, recMime: null, recDur: 0,
+  pending: 0,
+  review: null, reviewStart: 0,
+  asmKey: null, _sug: null,
+};
+function setAuth(token, user) {
+  S.token = token; S.user = user;
+  localStorage.setItem("token", token);
+  localStorage.setItem("user", JSON.stringify(user));
+}
+function clearAuth() {
+  S.token = null; S.user = null;
+  localStorage.removeItem("token"); localStorage.removeItem("user");
+}
+
+// ──────────────────────────────── API ─────────────────────────────────────────
+async function api(path, { method="GET", body } = {}) {
+  const headers = {};
+  if (S.token) headers["Authorization"] = "Bearer " + S.token;
+  if (body)    headers["Content-Type"]  = "application/json";
+  const res  = await fetch(API_BASE + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) { clearAuth(); render(); throw new Error("unauthorized"); }
+  if (!res.ok || data.ok === false) throw new Error(data.error || "HTTP " + res.status);
+  return data;
+}
+
+// ──────────────────────────────── UTILS ───────────────────────────────────────
+const esc = s => String(s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const val = id => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
+const fmt = s  => { const m=Math.floor(s/60); return m+":"+String(Math.floor(s%60)).padStart(2,"0"); };
+
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg; el.classList.add("show");
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("show"), 2400);
+}
+function openSheet(html) {
+  const bg = document.createElement("div"); bg.className = "sheet-bg";
+  const sh = document.createElement("div"); sh.className = "sheet";
+  sh.innerHTML = `<div class="handle"></div>` + html;
+  document.body.append(bg, sh);
+  const close = () => { bg.remove(); sh.remove(); };
+  bg.onclick = close;
+  return { sh, close };
+}
+function celebrate() {
+  if (document.getElementById("celebrate")) return;
+  const d = document.createElement("div"); d.id = "celebrate";
+  d.innerHTML = `<div class="big">🎉</div><div class="title" style="color:#fff">${t("targetLabel")} ✓</div>
+    <p style="max-width:300px">${t("targetReached")}</p>
+    <button class="btn secondary" style="background:#fff;width:auto;padding:0 28px" id="cd">${t("next")}</button>`;
+  document.body.appendChild(d);
+  document.getElementById("cd").onclick = () => d.remove();
+}
+
+const SVG = {
+  mic: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4"/></svg>`,
+  stop:`<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>`,
+  bell:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></svg>`,
+  user:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>`,
+  tabC:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4"/></svg>`,
+  tabR:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`,
+};
+
+// ──────────────────────────────── RENDER ROUTER ───────────────────────────────
+function render() {
+  document.documentElement.lang = LANG;
+  document.documentElement.dir  = T[LANG].dir;
+  if (!localStorage.getItem("lang"))     return screenLang();
+  if (!S.token)                          return screenAuth();
+  if (!localStorage.getItem("onboarded"))return screenOnboard();
+  screenMain();
+}
+
+// ── Language pick ─────────────────────────────────────────────────────────────
+function screenLang() {
+  document.getElementById("root").innerHTML = `
+    <div class="screen center">
+      <div class="title" style="text-align:center">${T.ar.chooseLang} · ${T.fr.chooseLang}</div>
+      <p class="sub" style="text-align:center">${T.ar.langNote}</p>
+      <div class="langpick">
+        <button data-l="ar">العربية</button>
+        <button data-l="fr">Français</button>
+      </div>
+    </div>`;
+  document.querySelectorAll("[data-l]").forEach(b => b.onclick = () => {
+    LANG = b.dataset.l; localStorage.setItem("lang", LANG); render();
+  });
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+function screenAuth(mode = "login") {
+  const isReg = mode === "register";
+  document.getElementById("root").innerHTML = `
+    <div class="topbar"><h1>${t("app")}</h1>
+      <button class="iconbtn" id="toggleLang" style="font-weight:700;font-size:15px">${LANG==="ar"?"FR":"ع"}</button></div>
+    <div class="screen">
+      <div class="title">${isReg ? t("register") : t("login")}</div>
+      <div id="err"></div>
+      ${isReg ? `
+        <label>${t("fullName")}</label><input class="field" id="fname">
+        <label>${t("role")}</label>
+        <select class="field" id="mrole">
+          <option value="doctor">${t("doctor")}</option>
+          <option value="nurse">${t("nurse")}</option>
+          <option value="other">${t("other")}</option>
+        </select>
+        <label>${t("depts")}</label><div id="depts"><div class="muted" style="font-size:13px">…</div></div>
+        <label>${t("otherDept")}</label><input class="field" id="odept">` : ""}
+      <label>${t("phone")}</label><input class="field fr" id="phone" inputmode="numeric">
+      <label>${t("password")}</label><input class="field" id="pwd" type="password">
+      ${isReg ? `<label>${t("confirmPwd")}</label><input class="field" id="pwd2" type="password">` : ""}
+      <div style="height:18px"></div>
+      <button class="btn" id="go">${isReg ? t("create") : t("login")}</button>
+      <button class="btn ghost" id="toggle" style="margin-top:10px">${isReg ? t("haveAccount") : t("noAccount")}</button>
+    </div>`;
+  document.getElementById("toggleLang").onclick = () => { LANG = LANG==="ar"?"fr":"ar"; localStorage.setItem("lang",LANG); screenAuth(mode); };
+  document.getElementById("toggle").onclick     = () => screenAuth(isReg ? "login" : "register");
+  document.getElementById("go").onclick         = () => isReg ? doRegister() : doLogin();
+  if (isReg) loadDepts();
+}
+async function loadDepts() {
+  try {
+    const {config} = await api("/config");
+    const depts    = config.departments || [];
+    const box      = document.getElementById("depts");
+    if (!box) return;
+    box.innerHTML = depts.length
+      ? depts.map(d => `<label class="flag-row" style="margin-bottom:6px"><input type="checkbox" value="${d.id}"> <span>${d.name}</span></label>`).join("")
+      : `<p class="muted" style="font-size:13px">—</p>`;
+  } catch {}
+}
+function showErr(m) { const el = document.getElementById("err"); if(el) el.innerHTML = `<div class="err">${m}</div>`; }
+async function doLogin() {
+  try {
+    const d = await api("/auth/login", { method:"POST", body:{ phone:val("phone"), password:val("pwd"), as_role:"user" }});
+    setAuth(d.token, d.user); render();
+  } catch(e) { showErr(e.message); }
+}
+async function doRegister() {
+  if (!/^\d{8}$/.test(val("phone"))) return showErr(t("phone8"));
+  if (val("pwd") !== val("pwd2"))    return showErr(t("pwdMatch"));
+  const departments = [...document.querySelectorAll("#depts input:checked")].map(c => c.value);
+  try {
+    await api("/auth/register", { method:"POST", body:{
+      full_name:val("fname"), medical_role:val("mrole"), phone:val("phone"),
+      password:val("pwd"), departments, other_department:val("odept")||null, language_pref:LANG }});
+    const d = await api("/auth/login", { method:"POST", body:{ phone:val("phone"), password:val("pwd"), as_role:"user" }});
+    setAuth(d.token, d.user); render();
+  } catch(e) { showErr(e.message); }
+}
+
+// ── Onboarding ────────────────────────────────────────────────────────────────
+function screenOnboard() {
+  let i = 0; const slides = T[LANG].slides;
+  const draw = () => {
+    const s = slides[i];
+    document.getElementById("root").innerHTML = `
+      <div class="screen">
+        <div style="text-align:end"><button class="btn ghost sm" style="width:auto" id="sk">${t("skipIntro")}</button></div>
+        <div class="slide"><div class="emoji">${s.e}</div><div class="title">${s.t}</div><p class="sub">${s.d}</p></div>
+        <div class="dots">${slides.map((_,j)=>`<i class="${j===i?"active":""}"></i>`).join("")}</div>
+        <button class="btn" id="nx">${i < slides.length-1 ? t("next") : t("start")}</button>
+      </div>`;
+    document.getElementById("sk").onclick = done;
+    document.getElementById("nx").onclick = () => { if(i<slides.length-1){i++;draw();}else done(); };
+  };
+  const done = () => { localStorage.setItem("onboarded","1"); render(); };
+  draw();
+}
+
+// ── Main shell ────────────────────────────────────────────────────────────────
+async function screenMain() {
+  let unread = 0;
+  try { const n = await api("/notifications"); unread = n.unread; } catch {}
+  // fetch pending count for badge
+  try { const d = await api("/me/contributions/to-transcribe"); S.pending = d.count||0; } catch {}
+
+  document.getElementById("root").innerHTML = `
+    <div class="topbar">
+      <h1>${t("app")}</h1>
+      <button class="iconbtn" id="bell">${SVG.bell}${unread?`<span class="dot">${unread}</span>`:""}</button>
+      <button class="iconbtn" id="profile">${SVG.user}</button>
+    </div>
+    <div id="body" class="screen"></div>
+    <div class="tabbar">
+      <button id="tc" class="${S.tab==="contrib"?"active":""}">${SVG.tabC}<span>${t("contributions")}</span></button>
+      <button id="tr" class="${S.tab==="reviews"?"active":""}">
+        ${SVG.tabR}<span style="position:relative">${t("reviews")}${S.pending?`<span class="tabbadge">${S.pending}</span>`:""}</span>
+      </button>
+    </div>`;
+  document.getElementById("bell").onclick   = sheetNotifications;
+  document.getElementById("profile").onclick = sheetProfile;
+  document.getElementById("tc").onclick      = () => { S.tab="contrib"; screenMain(); };
+  document.getElementById("tr").onclick      = () => { S.tab="reviews"; screenMain(); };
+  S.tab === "contrib" ? viewContrib() : viewReviews();
+}
+
+// ── Progress strip ────────────────────────────────────────────────────────────
+async function progressStrip() {
+  try {
+    const p = await api("/me/progress");
+    if (p.today > 0 && p.today % p.congrats_interval === 0) toast(t("congrats") + p.today);
+    if (p.today === p.daily_target && p.daily_target > 0) celebrate();
+    return `<div class="progress-row">
+      <div class="progress-cell"><div class="progress-num">${p.contributions}</div><div class="progress-lbl">${t("contribLbl")}</div></div>
+      <div class="progress-cell"><div class="progress-num">${p.reviews}</div><div class="progress-lbl">${t("reviewsLbl")}</div></div>
+      <div class="progress-cell"><div class="progress-num">${p.remaining_today}</div><div class="progress-lbl">${t("remainingLbl")}</div></div>
+    </div>`;
+  } catch { return ""; }
+}
+
+// ── Contributions tab ─────────────────────────────────────────────────────────
+async function viewContrib() {
+  const body = document.getElementById("body");
+  const prog = await progressStrip();
+  body.innerHTML = prog + `
+    <div class="subtabs">
+      <button id="sr" class="${S.sub==="record"?"active":""}"><span class="step">${t("step1")}</span>${t("record")}</button>
+      <button id="st" class="${S.sub==="transcribe"?"active":""}">
+        <span class="step">${t("step2")}</span>${t("transcribe")}${S.pending?` (${S.pending})`:""}</button>
+    </div>
+    <div id="sub"></div>`;
+  // nudge
+  const nudgeAt = 10;
+  if (S.sub==="record" && S.pending >= nudgeAt) {
+    document.getElementById("sub").insertAdjacentHTML("afterbegin",
+      `<div class="note" style="margin-bottom:12px">${t("nudge").replace("{n}",S.pending)}</div>`);
+  }
+  document.getElementById("sr").onclick = () => { S.sub="record";    viewContrib(); };
+  document.getElementById("st").onclick = () => { S.sub="transcribe";viewContrib(); };
+  S.sub === "record" ? viewRecord() : viewTranscribe();
+}
+
+// ── Record ────────────────────────────────────────────────────────────────────
+let mediaRec=null, chunks=[], recTimer=null;
+
+async function viewRecord() {
+  const box = document.getElementById("sub");
+  if (!S.combo) {
+    try {
+      const d = await api("/combinations/next");
+      if (d.paused) { box.innerHTML=`<div class="note">${t("paused")}</div>`; return; }
+      S.queue = d.combinations || []; S.combo = S.queue.shift() || null;
+    } catch(e) { box.innerHTML=`<div class="err">${e.message}</div>`; return; }
+  }
+  if (!S.combo) { box.innerHTML=`<div class="empty">—</div>`; return; }
+  box.innerHTML = `
+    <div class="card">
+      <div class="muted" style="font-size:14px;margin-bottom:8px">${LANG==="ar"?"اقرأ بصوت طبيعي:":"Lisez à voix naturelle :"}</div>
+      <div class="elements">${S.combo.elements.map(e=>`<span class="element">${esc(e)}</span>`).join("")}</div>
+    </div>
+    <div class="card rec-wrap">
+      <button class="recbtn" id="rb">${SVG.mic}</button>
+      <div class="timer" id="rtimer">0:00</div>
+      <div id="rpb"></div>
+    </div>
+    <div id="rerr"></div>
+    <button class="btn ghost sm" id="skip" style="margin-top:6px">${t("skip")}</button>`;
+  document.getElementById("rb").onclick   = toggleRec;
+  document.getElementById("skip").onclick = doSkip;
+}
+
+async function toggleRec() {
+  if (mediaRec && mediaRec.state === "recording") { mediaRec.stop(); return; }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio:true }); }
+  catch(e) {
+    const msg = e.name==="NotFoundError" ? t("micNone") : t("micDenied");
+    const rerr = document.getElementById("rerr");
+    if (rerr) rerr.innerHTML = `<div class="err">${msg}</div>`;
+    return;
+  }
+  chunks = []; S.recBlob = null;
+  S.recMime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus"
+            : MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "";
+  mediaRec = new MediaRecorder(stream, S.recMime ? { mimeType: S.recMime } : undefined);
+  const start = Date.now();
+  mediaRec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  mediaRec.onstop = () => {
+    stream.getTracks().forEach(x => x.stop()); clearInterval(recTimer);
+    S.recDur = (Date.now() - start) / 1000;
+    S.recBlob = new Blob(chunks, { type: S.recMime || "audio/webm" });
+    document.getElementById("rb")?.classList.remove("recording");
+    if (document.getElementById("rb")) document.getElementById("rb").innerHTML = SVG.mic;
+    showPlayback();
+  };
+  mediaRec.start(100);
+  const rb = document.getElementById("rb");
+  rb.classList.add("recording"); rb.innerHTML = SVG.stop;
+  recTimer = setInterval(() => {
+    const el = document.getElementById("rtimer");
+    if (el) el.textContent = fmt((Date.now()-start)/1000);
+  }, 200);
+}
+
+function showPlayback() {
+  const url = URL.createObjectURL(S.recBlob);
+  const box = document.getElementById("rpb");
+  if (!box) return;
+  box.innerHTML = `
+    <audio controls src="${url}" style="width:100%;margin-top:10px"></audio>
+    <div class="row" style="margin-top:12px">
+      <button class="btn secondary sm" id="rtk">${t("retake")}</button>
+      <button class="btn sm" id="uath">${t("submitAudio")}</button>
+    </div>`;
+  document.getElementById("rtk").onclick  = () => { S.recBlob=null; viewRecord(); };
+  document.getElementById("uath").onclick = submitAudio;
+}
+
+async function submitAudio() {
+  if (S.recDur < 2) { toast(t("tooShort")); return; }
+  const btn = document.getElementById("uath"); btn.disabled = true; btn.textContent = "…";
+  try {
+    const ua = navigator.userAgent;
+    const dev = {
+      device_type: /Mobi|Android|iPhone/.test(ua) ? "mobile" : "desktop",
+      os:    /Android/.test(ua)?"Android":/iPhone|iPad/.test(ua)?"iOS":"other",
+      browser:/Chrome/.test(ua)?"Chrome":/Safari/.test(ua)?"Safari":/Firefox/.test(ua)?"Firefox":"other"
+    };
+    const c  = await api("/contributions", { method:"POST", body:{ combination_id:S.combo.combination_id, ...dev }});
+    const u  = await api(`/contributions/${c.contribution_id}/upload-url`, { method:"POST", body:{ mime_type:S.recMime||"audio/webm" }});
+    // upload directly to Drive resumable session (bytes never touch the Worker)
+    const put  = await fetch(u.upload_url, { method:"PUT", headers:{"Content-Type":S.recMime||"audio/webm"}, body:S.recBlob });
+    const file = await put.json();
+    await api(`/contributions/${c.contribution_id}/audio-done`, { method:"POST",
+      body:{ drive_file_id:file.id, original_format:S.recMime||"audio/webm", duration_seconds:S.recDur }});
+    S.pending++; S.recBlob = null; S.combo = null;
+    promptAfterRecord();
+  } catch(e) {
+    const btn2 = document.getElementById("uath");
+    if(btn2){ btn2.disabled=false; btn2.textContent=t("submitAudio"); }
+    toast(e.message);
+  }
+}
+
+function promptAfterRecord() {
+  const {sh, close} = openSheet(`
+    <p style="font-weight:650;text-align:center;margin-bottom:18px">${t("recordedPrompt")}</p>
+    <button class="btn" id="ptn">${t("transcribeNow")} (${S.pending})</button>
+    <button class="btn secondary" id="pkr" style="margin-top:10px">${t("keepRec")}</button>`);
+  document.getElementById("ptn").onclick = () => { close(); S.sub="transcribe"; viewContrib(); };
+  document.getElementById("pkr").onclick = () => { close(); viewRecord(); };
+}
+
+async function doSkip() {
+  try { await api("/skips", { method:"POST", body:{ combination_id:S.combo.combination_id }}); } catch {}
+  S.combo = S.queue.shift() || null;
+  viewRecord();
+}
+
+// ── Transcribe ────────────────────────────────────────────────────────────────
+async function viewTranscribe() {
+  const box = document.getElementById("sub");
+  box.innerHTML = `<div class="muted" style="text-align:center;padding:20px">${t("loading")}</div>`;
+  let items = [];
+  try { const d = await api("/me/contributions/to-transcribe"); items=d.items; S.pending=d.count||0; }
+  catch(e) { box.innerHTML=`<div class="err">${e.message}</div>`; return; }
+  if (!items.length) { box.innerHTML=`<div class="empty">${t("noPending")}</div>`; return; }
+  const clip = items[0];
+  box.innerHTML = `
+    <div class="card">
+      <audio id="ta" controls autoplay style="width:100%"></audio>
+      <button class="btn secondary sm" id="trpl" style="margin-top:10px">${t("retake")}</button>
+    </div>
+    <div id="sugbox"></div>
+    <div id="typebox" class="hidden">
+      <label>${t("typeHere")}</label>
+      <textarea class="field fr" id="ttext" dir="ltr" placeholder="${t("typeHere")}"></textarea>
+      <button class="btn" id="tsend" style="margin-top:12px">${t("send")}</button>
+    </div>`;
+  // load audio directly from Drive
+  document.getElementById("ta").src = DRIVE.audioUrl(clip.drive_file_id);
+  document.getElementById("trpl").onclick = () => { const a=document.getElementById("ta"); a.currentTime=0; a.play(); };
+  getSuggestion(clip);
+  document.getElementById("tsend")?.addEventListener("click", () => {
+    sendTranscription(clip.id, val("ttext"), "typed_own", S._sug||null);
+  });
+}
+
+async function getSuggestion(clip) {
+  const sb = document.getElementById("sugbox");
+  const showType = () => { const tb = document.getElementById("typebox"); if(tb) tb.classList.remove("hidden"); };
+  try {
+    if (!S.asmKey) { const k = await api("/integrations/assemblyai-key"); S.asmKey = k.key; }
+    if (!S.asmKey || !navigator.onLine) { showType(); return; }
+    if (sb) sb.innerHTML = `<div class="note" style="text-align:center">…</div>`;
+    // fetch audio blob from Drive to upload to AssemblyAI
+    const audioRes = await fetch(DRIVE.audioUrl(clip.drive_file_id));
+    const audioBlob = await audioRes.blob();
+    const up = await fetch("https://api.assemblyai.com/v2/upload", {
+      method:"POST", headers:{authorization:S.asmKey}, body:audioBlob });
+    const {upload_url} = await up.json();
+    const tr = await fetch("https://api.assemblyai.com/v2/transcript", {
+      method:"POST", headers:{authorization:S.asmKey,"content-type":"application/json"},
+      body:JSON.stringify({ audio_url:upload_url, language_code:"fr", word_boost:(clip.word_boost||[]).slice(0,1000) })});
+    const {id} = await tr.json();
+    let text = "";
+    for (let i=0; i<30; i++) {
+      await new Promise(r=>setTimeout(r,1500));
+      const p = await (await fetch("https://api.assemblyai.com/v2/transcript/"+id,{headers:{authorization:S.asmKey}})).json();
+      if (p.status==="completed"){ text=p.text||""; break; }
+      if (p.status==="error") break;
+    }
+    if (text && sb) {
+      S._sug = text;
+      sb.innerHTML = `<div class="card"><div class="muted" style="font-size:13px;margin-bottom:6px">${t("suggestion")}</div>
+        <div class="fr" style="font-weight:700;text-decoration:underline">${esc(text)}</div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn sm" id="usesug">${t("useThis")}</button>
+          <button class="btn secondary sm" id="typeown">${t("typeMine")}</button>
+        </div></div>`;
+      document.getElementById("usesug").onclick  = () => sendTranscription(clip.id, text, "accepted_as_is", text);
+      document.getElementById("typeown").onclick = () => { sb.innerHTML=""; showType(); };
+    } else { if(sb) sb.innerHTML=""; showType(); }
+  } catch { if(sb) sb.innerHTML=""; showType(); }
+}
+
+async function sendTranscription(id, text, source, sug) {
+  if (!text?.trim()) { toast(t("typeHere")); return; }
+  try {
+    await api(`/contributions/${id}/transcribe`, { method:"POST", body:{ transcription:text, source, ai_suggestion:sug }});
+    S._sug=null; S.pending=Math.max(0,S.pending-1);
+    toast(t("sent")); viewTranscribe();
+  } catch(e) { toast(e.message); }
+}
+
+// ── Reviews ───────────────────────────────────────────────────────────────────
+const AUDIO_FLAGS = [
+  {code:"starts_late"},{code:"finishes_early"},{code:"noisy",followup:true},
+  {code:"inaudible"},{code:"empty"},{code:"wrong_language",red:true},
+  {code:"multiple_voices"},{code:"distorted"},{code:"free_text",free:true}];
+const TEXT_FLAGS = [
+  {code:"has_error"},{code:"incomplete"},{code:"spelling_error"},
+  {code:"wrong_element"},{code:"extra_content"},{code:"wrong_abbreviation"},{code:"free_text",free:true}];
+
+async function viewReviews() {
+  const body = document.getElementById("body");
+  body.innerHTML = `<div class="muted" style="text-align:center;padding:20px">${t("loading")}</div>`;
+  let clip;
+  try { const d = await api("/reviews/next"); if(d.paused){body.innerHTML=`<div class="note">${t("paused")}</div>`;return;} clip=d.clip; }
+  catch(e) { body.innerHTML=`<div class="err">${e.message}</div>`; return; }
+  if (!clip) { body.innerHTML=`<div class="empty">${t("noClips")}</div>`; return; }
+  S.review = clip; S.reviewStart = Date.now();
+  body.innerHTML = `
+    <div class="card"><audio id="ra" controls autoplay style="width:100%"></audio></div>
+    <div class="card">
+      <div style="font-weight:650;margin-bottom:8px">${t("audioFlags")}</div>
+      <div id="aflags">${AUDIO_FLAGS.map(f=>flagRow(f)).join("")}</div>
+    </div>
+    <div class="card">
+      <div class="fr" style="font-size:18px;font-weight:600;margin-bottom:12px">${esc(clip.text||"")}</div>
+      <div style="font-weight:650;margin-bottom:8px">${t("textFlags")}</div>
+      <div id="tflags">${TEXT_FLAGS.map(f=>flagRow(f)).join("")}</div>
+      <div id="editwrap" class="hidden">
+        <label>${t("edit")}</label>
+        <textarea class="field fr" id="redit" dir="ltr">${esc(clip.text||"")}</textarea>
+      </div>
+    </div>
+    <button class="btn" id="rsub">${t("submitReview")}</button>`;
+  // load audio directly from Drive
+  document.getElementById("ra").src = DRIVE.audioUrl(clip.drive_file_id);
+  wireFlags();
+  document.getElementById("rsub").onclick = submitReview;
+}
+
+function flagRow(f) {
+  return `<label class="flag-row${f.red?" red":""}" data-code="${f.code}">
+    <input type="checkbox" data-followup="${f.followup?1:0}" data-free="${f.free?1:0}" data-red="${f.red?1:0}">
+    <span style="flex:1">${fl(f.code)}</span>
+    ${f.free?`<input class="field fr" style="min-height:36px;margin-top:6px" placeholder="…" data-freetext>`:""}</label>`;
+}
+
+function wireFlags() {
+  document.querySelectorAll(".flag-row input[type=checkbox]").forEach(cb => {
+    cb.onchange = () => {
+      const label = cb.closest(".flag-row"); label.classList.toggle("on", cb.checked);
+      const free  = label.querySelector("[data-freetext]"); if(free) free.style.display = cb.checked?"block":"none";
+      if (cb.dataset.followup==="1" && cb.checked) {
+        const q = LANG==="ar"?"هل ما زال مسموعاً؟":"Est-ce encore audible ?";
+        const a = confirm(q); label.dataset.fq=q; label.dataset.fa=a?"yes":"no";
+      }
+      const anyText = [...document.querySelectorAll("#tflags input[type=checkbox]:checked")].length > 0;
+      document.getElementById("editwrap")?.classList.toggle("hidden", !anyText);
+    };
+  });
+}
+
+function collectFlags(containerId) {
+  return [...document.querySelectorAll("#"+containerId+" .flag-row")].filter(l => l.querySelector("input[type=checkbox]").checked)
+    .map(l => {
+      const cb   = l.querySelector("input[type=checkbox]");
+      const free = l.querySelector("[data-freetext]");
+      const f    = { code:l.dataset.code, is_red:cb.dataset.red==="1" };
+      if (free)      f.free_text        = free.value;
+      if (l.dataset.fq) { f.followup_question=l.dataset.fq; f.followup_answer=l.dataset.fa; }
+      return f;
+    });
+}
+
+async function submitReview() {
+  const audio_flags = collectFlags("aflags");
+  const text_flags  = collectFlags("tflags");
+  const edited      = !document.getElementById("editwrap").classList.contains("hidden");
+  const text_left   = edited ? val("redit") : (S.review.text||"");
+  const dur         = (Date.now() - S.reviewStart) / 1000;
+  const btn         = document.getElementById("rsub"); btn.disabled = true;
+  try {
+    await api("/reviews", { method:"POST", body:{
+      contribution_id:S.review.contribution_id, text_seen:S.review.text,
+      audio_flags, text_flags, text_edited:edited&&text_flags.length>0, text_left, duration_seconds:dur }});
+    toast(t("sent")); viewReviews();
+  } catch(e) { toast(e.message); btn.disabled=false; }
+}
+
+// ── Sheets ────────────────────────────────────────────────────────────────────
+async function sheetNotifications() {
+  const {sh} = openSheet(`<div class="title" style="font-size:20px">${t("notifications")}</div><div id="nl">…</div>`);
+  try {
+    const d = await api("/notifications");
+    sh.querySelector("#nl").innerHTML = d.items.length
+      ? d.items.map(n=>`<div class="listitem"><div style="flex:1">
+          ${n.is_read?"":"🔵 "}<b>${esc(n.title||"")}</b>
+          <div>${esc(n.body)}</div>
+          <div class="muted" style="font-size:12px">${n.created_at.slice(0,16).replace("T"," ")}</div>
+        </div></div>`).join("")
+      : `<div class="empty">${t("noNotifs")}</div>`;
+    d.items.filter(n=>!n.is_read).forEach(n => api(`/notifications/${n.id}/read`,{method:"POST"}).catch(()=>{}));
+  } catch(e) { sh.querySelector("#nl").innerHTML=`<div class="err">${e.message}</div>`; }
+}
+
+function sheetProfile() {
+  const {close} = openSheet(`
+    <button class="listitem" id="mc">${SVG.user} <span>${t("myContrib")}</span></button>
+    <button class="listitem" id="cp">${SVG.user} <span>${t("changePwd")}</span></button>
+    <button class="listitem" id="lo" style="color:var(--danger)">${SVG.user} <span>${t("logout")}</span></button>`);
+  document.getElementById("mc").onclick = () => { close(); sheetMyContrib(); };
+  document.getElementById("cp").onclick = () => { close(); sheetChangePwd(); };
+  document.getElementById("lo").onclick = async () => {
+    try { await api("/auth/logout",{method:"POST"}); } catch {}
+    clearAuth(); close(); render();
+  };
+}
+
+async function sheetMyContrib() {
+  const {sh} = openSheet(`<div class="title" style="font-size:20px">${t("myContrib")}</div><div id="ml">…</div>`);
+  try {
+    const d = await api("/me/contributions");
+    sh.querySelector("#ml").innerHTML = d.items.length
+      ? d.items.map(c=>`<div class="listitem">
+          <div style="flex:1">
+            <div class="fr">${esc(c.transcription||"—")}</div>
+            ${c.rejected?`<span style="font-size:12px;color:#922">${t("rejected")}</span>`:""}
+          </div>
+          ${c.editable?`<button class="btn secondary sm" style="width:auto;padding:0 14px;flex-shrink:0" data-cid="${c.id}" data-ct="${esc(c.transcription||"")}">${t("edit")}</button>`:""}</div>`).join("")
+      : `<div class="empty">—</div>`;
+    sh.querySelectorAll("[data-cid]").forEach(b => b.onclick = () => sheetEditContrib(b.dataset.cid, b.dataset.ct));
+  } catch(e) { sh.querySelector("#ml").innerHTML=`<div class="err">${e.message}</div>`; }
+}
+
+function sheetEditContrib(id, text) {
+  const {close} = openSheet(`
+    <div class="title" style="font-size:20px">${t("edit")}</div>
+    <textarea class="field fr" id="ec" dir="ltr">${esc(text)}</textarea>
+    <button class="btn" id="ecs" style="margin-top:12px">${t("save")}</button>`);
+  document.getElementById("ecs").onclick = async () => {
+    try { await api(`/contributions/${id}`,{method:"PUT",body:{transcription:val("ec")}}); toast(t("saved")); close(); }
+    catch(e) { toast(e.message); }
+  };
+}
+
+function sheetChangePwd() {
+  const {close} = openSheet(`
+    <div class="title" style="font-size:20px">${t("changePwd")}</div>
+    <label>${t("oldPwd")}</label><input class="field" id="op" type="password">
+    <label>${t("newPwd")}</label><input class="field" id="np" type="password">
+    <button class="btn" id="cps" style="margin-top:14px">${t("save")}</button>`);
+  document.getElementById("cps").onclick = async () => {
+    try { await api("/auth/change-password",{method:"POST",body:{old:val("op"),new:val("np")}}); toast(t("saved")); close(); }
+    catch(e) { toast(e.message); }
+  };
+}
+
+// ──────────────────────────────── BOOT ────────────────────────────────────────
+window.addEventListener("offline", () => toast(t("offline")));
+render();
+</script>
+</body>
+</html>

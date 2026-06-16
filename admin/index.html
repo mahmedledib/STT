@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard — STT Platform</title>
+<style>
+:root{
+  --bg:#F4F8F9;--surface:#fff;--ink:#16262E;--muted:#5E747D;--line:#E1EAED;
+  --primary:#0E7C86;--primary-d:#0A5E66;--primary-soft:#E3F2F2;
+  --green:#2E8B7B;--green-soft:#E5F3EF;--danger:#C2453B;--danger-soft:#FBEAE8;
+  --amber:#B7791F;--amber-soft:#FEF3C7;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5}
+button{font-family:inherit;font-size:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit;font-size:15px}
+.hidden{display:none!important}
+a{color:var(--primary);text-decoration:none}
+
+/* layout */
+.shell{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--ink);color:#fff;flex-shrink:0;display:flex;flex-direction:column;padding:0}
+.sidebar .logo{padding:22px 20px 16px;font-size:15px;font-weight:700;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar .logo small{display:block;font-size:11px;opacity:.5;font-weight:400;margin-top:2px}
+.nav{flex:1;padding:10px 0}
+.nav button{display:flex;align-items:center;gap:10px;width:100%;padding:11px 20px;color:rgba(255,255,255,.7);font-size:14px;font-weight:500;border-radius:0}
+.nav button:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav button.active{background:rgba(255,255,255,.12);color:#fff;font-weight:650}
+.sidebar .bottom{padding:14px 20px;border-top:1px solid rgba(255,255,255,.1);font-size:13px;color:rgba(255,255,255,.5)}
+.sidebar .bottom b{color:#fff;display:block;font-size:14px}
+.main{flex:1;padding:28px 32px;overflow:auto;max-width:1100px}
+.page-title{font-size:22px;font-weight:700;margin:0 0 22px}
+
+/* cards & grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px}
+.stat .num{font-size:32px;font-weight:700;color:var(--primary)}
+.stat .lbl{font-size:13px;color:var(--muted);margin-top:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:20px}
+.card-title{font-size:16px;font-weight:650;margin:0 0 16px}
+
+/* table */
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:start;padding:8px 12px;background:var(--bg);font-weight:600;font-size:13px;color:var(--muted);border-bottom:2px solid var(--line)}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafcfc}
+
+/* progress bar */
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;min-width:80px}
+.bar-fill{height:100%;background:var(--primary);border-radius:3px;transition:.3s}
+.bar-fill.green{background:var(--green)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:0 16px;height:38px;border-radius:10px;
+  font-weight:600;background:var(--primary);color:#fff;font-size:14px}
+.btn:hover{background:var(--primary-d)}
+.btn.sm{height:32px;padding:0 12px;font-size:13px}
+.btn.secondary{background:var(--surface);color:var(--primary-d);border:1.5px solid var(--primary)}
+.btn.danger{background:var(--danger);color:#fff}
+.btn.ghost{background:transparent;color:var(--muted);border:1.5px solid var(--line)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+
+/* form */
+label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:12px 0 5px}
+.field{width:100%;height:40px;border:1.5px solid var(--line);border-radius:10px;padding:0 12px;background:var(--surface)}
+.field:focus{outline:none;border-color:var(--primary)}
+textarea.field{height:90px;padding:10px 12px;resize:vertical;line-height:1.5}
+select.field{appearance:auto}
+.row{display:flex;gap:12px;align-items:flex-end}
+.row>.grow{flex:1}
+
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--surface);border-radius:16px;padding:28px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto}
+.modal h2{margin:0 0 18px;font-size:18px}
+
+/* pill / badge */
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600}
+.pill.green{background:var(--green-soft);color:#1d5a4f}
+.pill.amber{background:var(--amber-soft);color:#92400e}
+.pill.red  {background:var(--danger-soft);color:#922}
+.pill.gray {background:var(--line);color:var(--muted)}
+
+/* alerts */
+.note{background:var(--green-soft);border:1px solid #cfe7df;border-radius:10px;padding:12px 14px;font-size:13px;color:#1d5a4f;margin-bottom:14px}
+.err {background:var(--danger-soft);border:1px solid #f0c8c4;color:#922;border-radius:10px;padding:12px 14px;font-size:13px;margin:8px 0}
+.warn{background:var(--amber-soft);border:1px solid #fcd34d;border-radius:10px;padding:12px 14px;font-size:13px;color:#92400e;margin-bottom:14px}
+
+/* secret input */
+.secret-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.secret-row .key{font-size:13px;font-family:monospace;color:var(--muted);width:240px;flex-shrink:0}
+.secret-status{font-size:12px;color:var(--green);font-weight:600;min-width:60px}
+.secret-status.unset{color:var(--amber)}
+
+/* login */
+.login-wrap{max-width:380px;margin:80px auto;padding:32px;background:var(--surface);border:1px solid var(--line);border-radius:16px}
+.login-wrap h1{margin:0 0 24px;font-size:22px}
+
+#toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;
+  padding:12px 18px;border-radius:12px;font-size:14px;z-index:60;opacity:0;transition:.25s;pointer-events:none}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast"></div>
+<script>
+"use strict";
+
+const API_BASE = "https://stt-platform.m-ahmedledib123.workers.dev/api"; // ← same Worker URL
+
+const S = {
+  token: localStorage.getItem("adm_token") || null,
+  user:  JSON.parse(localStorage.getItem("adm_user")||"null"),
+  acting_role: localStorage.getItem("adm_role")||null,
+  page: "overview",
+};
+function setAuth(t,u,r){S.token=t;S.user=u;S.acting_role=r;
+  localStorage.setItem("adm_token",t);localStorage.setItem("adm_user",JSON.stringify(u));localStorage.setItem("adm_role",r);}
+function clearAuth(){S.token=null;S.user=null;S.acting_role=null;
+  localStorage.removeItem("adm_token");localStorage.removeItem("adm_user");localStorage.removeItem("adm_role");}
+
+async function api(path,{method="GET",body}={}){
+  const h={};
+  if(S.token) h["Authorization"]="Bearer "+S.token;
+  if(body)    h["Content-Type"]="application/json";
+  const res=await fetch(API_BASE+path,{method,headers:h,body:body?JSON.stringify(body):undefined});
+  const data=await res.json().catch(()=>({}));
+  if(res.status===401){clearAuth();render();throw new Error("unauthorized");}
+  if(!res.ok||data.ok===false) throw new Error(data.error||"HTTP "+res.status);
+  return data;
+}
+const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const val=id=>{const el=document.getElementById(id);return el?el.value.trim():"";};
+const isSA=()=>S.acting_role==="superadmin";
+
+function toast(msg,isErr=false){
+  const el=document.getElementById("toast");
+  el.textContent=msg;el.style.background=isErr?"#C2453B":"#16262E";
+  el.classList.add("show");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("show"),2600);}
+
+function render(){
+  if(!S.token) return renderLogin();
+  renderShell();
+}
+
+// ── Login ─────────────────────────────────────────────────────────────────────
+function renderLogin(){
+  document.getElementById("app").innerHTML=`
+    <div class="login-wrap">
+      <h1>Dashboard — STT Platform</h1>
+      <div id="lerr"></div>
+      <label>Téléphone</label><input class="field" id="lp" inputmode="numeric">
+      <label>Mot de passe</label><input class="field" id="lpwd" type="password">
+      <label>Entrer comme</label>
+      <select class="field" id="lrole">
+        <option value="admin">Admin</option>
+        <option value="superadmin">Super-Admin</option>
+      </select>
+      <button class="btn" id="lgo" style="width:100%;margin-top:18px;justify-content:center">Connexion</button>
+    </div>`;
+  document.getElementById("lgo").onclick=async()=>{
+    try{
+      const d=await api("/auth/login",{method:"POST",body:{phone:val("lp"),password:val("lpwd"),as_role:val("lrole")}});
+      setAuth(d.token,d.user,d.acting_role);render();
+    }catch(e){document.getElementById("lerr").innerHTML=`<div class="err">${e.message}</div>`;}
+  };
+}
+
+// ── Shell ─────────────────────────────────────────────────────────────────────
+function renderShell(){
+  const pages=[
+    {id:"overview", label:"Vue d'ensemble", sa:false},
+    {id:"users",    label:"Utilisateurs",   sa:false},
+    {id:"flags",    label:"Signalements",   sa:false},
+    {id:"broadcast",label:"Notifications",  sa:false},
+    {id:"elements", label:"Éléments",       sa:true},
+    {id:"combos",   label:"Combinaisons",   sa:true},
+    {id:"config",   label:"Configuration",  sa:true},
+    {id:"secrets",  label:"Clés secrètes",  sa:true},
+    {id:"export",   label:"Exports",        sa:true},
+    {id:"demo",     label:"Mode démo",      sa:true},
+    {id:"audit",    label:"Journal audit",  sa:true},
+  ].filter(p=>!p.sa||isSA());
+  document.getElementById("app").innerHTML=`
+    <div class="shell">
+      <div class="sidebar">
+        <div class="logo">STT Platform<small>Dashboard ${isSA()?"Super-Admin":"Admin"}</small></div>
+        <nav class="nav">${pages.map(p=>`<button data-page="${p.id}" class="${S.page===p.id?"active":""}">${p.label}</button>`).join("")}</nav>
+        <div class="bottom"><b>${esc(S.user?.full_name||"")}</b>${S.acting_role}<br><button id="lo" style="color:rgba(255,255,255,.5);margin-top:6px;font-size:12px">Déconnexion</button></div>
+      </div>
+      <main class="main" id="main"></main>
+    </div>`;
+  document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{S.page=b.dataset.page;renderShell();});
+  document.getElementById("lo").onclick=async()=>{try{await api("/auth/logout",{method:"POST"});}catch{}clearAuth();render();};
+  loadPage(S.page);
+}
+function loadPage(p){
+  const fns={overview:pageOverview,users:pageUsers,flags:pageFlags,broadcast:pageBroadcast,
+    elements:pageElements,combos:pageCombos,config:pageConfig,secrets:pageSecrets,
+    export:pageExport,demo:pageDemo,audit:pageAudit};
+  (fns[p]||pageOverview)();
+}
+
+// ── Overview ──────────────────────────────────────────────────────────────────
+async function pageOverview(){
+  m("<h2 class='page-title'>Vue d'ensemble</h2><div id='ov'>Chargement…</div>");
+  try{
+    const [dist,users]=await Promise.all([api("/admin/distribution"),api("/admin/users")]);
+    const total=dist.total_clips||0;
+    const secs=dist.total_seconds||0;
+    const hrs=Math.floor(secs/3600); const mins=Math.floor((secs%3600)/60);
+    document.getElementById("ov").innerHTML=`
+      <div class="grid">
+        <div class="stat"><div class="num">${total}</div><div class="lbl">Contributions totales</div></div>
+        <div class="stat"><div class="num">${users.users.length}</div><div class="lbl">Utilisateurs actifs</div></div>
+        <div class="stat"><div class="num">${hrs}h${mins}m</div><div class="lbl">Audio collecté</div></div>
+      </div>
+      <div class="card"><div class="card-title">Par catégorie</div>
+        <table><thead><tr><th>Catégorie</th><th>Contributions</th></tr></thead><tbody>
+          ${(dist.by_category||[]).map(r=>`<tr><td>${esc(r.category)}</td><td>${r.n}</td></tr>`).join("")}
+        </tbody></table></div>`;
+  }catch(e){document.getElementById("ov").innerHTML=`<div class="err">${e.message}</div>`;}
+}
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+async function pageUsers(){
+  m(`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h2 class="page-title" style="margin:0">Utilisateurs</h2>
+      <button class="btn" id="uadd">+ Ajouter</button></div>
+    <div id="utbl">Chargement…</div>`);
+  document.getElementById("uadd").onclick=modalAddUser;
+  await loadUsers();
+}
+async function loadUsers(){
+  try{
+    const {users}=await api("/admin/users");
+    const maxC=Math.max(1,...users.map(u=>u.contributions||0));
+    const maxR=Math.max(1,...users.map(u=>u.reviews||0));
+    document.getElementById("utbl").innerHTML=`
+      <div class="card" style="padding:0;overflow:auto">
+      <table><thead><tr><th>Nom</th><th>Rôle</th><th>Contributions</th><th>Révisions</th><th>Dernière activité</th><th></th></tr></thead>
+      <tbody>${users.map(u=>`<tr>
+        <td><b>${esc(u.full_name)}</b></td>
+        <td><span class="pill ${u.medical_role==="doctor"?"green":"gray"}">${u.medical_role}</span></td>
+        <td><div class="bar"><div class="bar-fill" style="width:${Math.round(u.contributions/maxC*100)}%"></div></div>
+            <small>${u.contributions}</small></td>
+        <td><div class="bar"><div class="bar-fill green" style="width:${Math.round(u.reviews/maxR*100)}%"></div></div>
+            <small>${u.reviews}</small></td>
+        <td class="muted" style="font-size:13px">${u.last_active_at?(u.last_active_at.slice(0,10)):"—"}</td>
+        <td><button class="btn sm ghost" data-uid="${u.id}">Détail</button></td>
+      </tr>`).join("")}</tbody></table></div>`;
+    document.querySelectorAll("[data-uid]").forEach(b=>b.onclick=()=>modalUserDetail(b.dataset.uid));
+  }catch(e){const el=document.getElementById("utbl");if(el)el.innerHTML=`<div class="err">${e.message}</div>`;}
+}
+function modalAddUser(){
+  modal(`<h2>Ajouter un utilisateur</h2>
+    <div id="auerr"></div>
+    <label>Nom complet</label><input class="field" id="aun">
+    <label>Rôle médical</label><select class="field" id="aur"><option value="doctor">Médecin</option><option value="nurse">Infirmier·ère</option><option value="other">Autre</option></select>
+    <label>Rôle système</label><select class="field" id="ausr"><option value="user">User</option>${isSA()?'<option value="admin">Admin</option>':""}</select>
+    <label>Téléphone</label><input class="field" id="aupn" inputmode="numeric">
+    <label>Mot de passe</label><input class="field" id="aupw" type="password">
+    <div class="row" style="margin-top:18px">
+      <button class="btn" id="auok">Créer</button><button class="btn ghost" id="auca">Annuler</button></div>`,
+  ()=>{},
+  async()=>{
+    try{
+      await api("/admin/users",{method:"POST",body:{full_name:val("aun"),medical_role:val("aur"),system_role:val("ausr"),phone:val("aupn"),password:val("aupw")}});
+      closeModal();toast("Utilisateur créé");await loadUsers();
+    }catch(e){const el=document.getElementById("auerr");if(el)el.innerHTML=`<div class="err">${e.message}</div>`;}
+  });
+}
+async function modalUserDetail(uid){
+  modal(`<h2>Chargement…</h2><div id="udet">…</div>`,()=>{});
+  try{
+    const {user,contributions}=await api("/admin/users/"+uid);
+    document.querySelector(".modal h2").textContent=user.full_name;
+    document.getElementById("udet").innerHTML=`
+      <p class="muted" style="margin-top:0">${user.medical_role} · ${user.system_role} · ${user.phone}</p>
+      <p>Créé le ${user.created_at?.slice(0,10)} · Dernière activité : ${user.last_active_at?.slice(0,10)||"—"}</p>
+      <div class="card-title" style="margin-top:16px">Contributions (${contributions.length})</div>
+      <div style="max-height:300px;overflow-y:auto">
+      <table><thead><tr><th>Statut</th><th>Format</th><th>Appareil</th><th>Date</th></tr></thead>
+      <tbody>${contributions.slice(0,100).map(c=>`<tr>
+        <td><span class="pill ${c.status==="final"?"green":c.status==="rejected"?"red":"gray"}">${c.status}</span></td>
+        <td style="font-size:12px">${c.original_format||"—"}</td>
+        <td style="font-size:12px">${c.device_type||""} ${c.os||""}</td>
+        <td style="font-size:12px">${c.created_at?.slice(0,10)||""}</td>
+      </tr>`).join("")}</tbody></table></div>
+      <button class="btn danger sm" id="deluser" style="margin-top:16px">Supprimer cet utilisateur</button>`;
+    document.getElementById("deluser").onclick=async()=>{
+      if(!confirm("Supprimer "+user.full_name+" ? Ses données seront archivées.")) return;
+      try{await api("/admin/users/"+uid,{method:"DELETE"});closeModal();toast("Supprimé");await loadUsers();}
+      catch(e){toast(e.message,true);}
+    };
+  }catch(e){document.getElementById("udet").innerHTML=`<div class="err">${e.message}</div>`;}
+}
+
+// ── Flags ─────────────────────────────────────────────────────────────────────
+async function pageFlags(){
+  m(`<h2 class="page-title">Signalements</h2><div id="flcont">Chargement…</div>`);
+  try{
+    const {flags}=await api("/admin/flags");
+    document.getElementById("flcont").innerHTML=`<div class="card" style="padding:0;overflow:auto">
+      <table><thead><tr><th>Catégorie</th><th>Code</th><th>Texte libre</th><th>Date</th></tr></thead>
+      <tbody>${flags.map(f=>`<tr>
+        <td><span class="pill ${f.category==="audio"?"amber":"gray"}">${f.category}</span></td>
+        <td><code>${esc(f.code)}</code>${f.is_red?` <span class="pill red">rouge</span>`:""}</td>
+        <td style="font-size:13px">${esc(f.free_text||"")}</td>
+        <td style="font-size:12px;color:var(--muted)">${f.created_at?.slice(0,16)}</td>
+      </tr>`).join("")}</tbody></table></div>`;
+  }catch(e){document.getElementById("flcont").innerHTML=`<div class="err">${e.message}</div>`;}
+}
+
+// ── Broadcast ─────────────────────────────────────────────────────────────────
+function pageBroadcast(){
+  m(`<h2 class="page-title">Envoyer une notification</h2>
+    <div class="card">
+      <div id="bcerr"></div>
+      <label>Titre</label><input class="field" id="bct" placeholder="Titre">
+      <label>Message</label><textarea class="field" id="bcb" placeholder="Message…"></textarea>
+      <label style="margin-top:14px">Destinataires</label>
+      <select class="field" id="bcto"><option value="all">Tous les utilisateurs</option></select>
+      <button class="btn" id="bcsend" style="margin-top:16px">Envoyer</button>
+    </div>`);
+  document.getElementById("bcsend").onclick=async()=>{
+    try{
+      const d=await api("/admin/notifications/broadcast",{method:"POST",body:{title:val("bct"),body:val("bcb"),user_ids:[]}});
+      toast(`Envoyé à ${d.sent} utilisateur(s)`);
+    }catch(e){const el=document.getElementById("bcerr");if(el)el.innerHTML=`<div class="err">${e.message}</div>`;}
+  };
+}
+
+// ── Elements (SA) ─────────────────────────────────────────────────────────────
+async function pageElements(){
+  m(`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h2 class="page-title" style="margin:0">Éléments médicaux</h2>
+      <button class="btn" id="eladd">+ Ajouter</button></div>
+    <div id="elcont">Chargement…</div>`);
+  document.getElementById("eladd").onclick=modalAddElement;
+  await loadElements();
+}
+async function loadElements(){
+  try{
+    const {elements}=await api("/elements");
+    const bycat={};
+    elements.forEach(e=>{(bycat[e.category]=bycat[e.category]||[]).push(e);});
+    document.getElementById("elcont").innerHTML=Object.entries(bycat).map(([cat,els])=>`
+      <div class="card"><div class="card-title">${cat} (${els.length})</div>
+      <table><thead><tr><th>Nom</th><th>Statut</th><th></th></tr></thead>
+      <tbody>${els.map(e=>`<tr>
+        <td>${esc(e.name)}</td>
+        <td><span class="pill ${e.status==="active"?"green":"gray"}">${e.status}</span></td>
+        <td>${e.status==="active"?`<button class="btn sm ghost" data-eid="${e.id}">Retirer</button>`:""}</td>
+      </tr>`).join("")}</tbody></table></div>`).join("");
+    document.querySelectorAll("[data-eid]").forEach(b=>b.onclick=async()=>{
+      if(!confirm("Retirer cet élément ? Les clips existants sont conservés.")) return;
+      try{await api("/elements/"+b.dataset.eid,{method:"PATCH",body:{status:"retired"}});toast("Retiré");await loadElements();}
+      catch(e){toast(e.message,true);}
+    });
+  }catch(e){const el=document.getElementById("elcont");if(el)el.innerHTML=`<div class="err">${e.message}</div>`;}
+}
+function modalAddElement(){
+  modal(`<h2>Ajouter un élément</h2>
+    <div id="elerr"></div>
+    <label>Catégorie</label><select class="field" id="elcat"><option value="drug">Médicament</option><option value="analysis">Analyse</option><option value="radiology">Radiologie</option></select>
+    <label>Nom (français)</label><input class="field" id="elname" dir="ltr">
+    <div class="row" style="margin-top:18px">
+      <button class="btn" id="elok">Créer</button><button class="btn ghost" id="elca">Annuler</button></div>`,
+  ()=>{},
+  async()=>{
+    try{await api("/elements",{method:"POST",body:{category:val("elcat"),name:val("elname")}});closeModal();toast("Créé");await loadElements();}
+    catch(e){const el=document.getElementById("elerr");if(el)el.innerHTML=`<div class="err">${e.message}</div>`;}
+  });
+}
+
+// ── Combinations (SA) ─────────────────────────────────────────────────────────
+async function pageCombos(){
+  m(`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h2 class="page-title" style="margin:0">Combinaisons</h2>
+      <button class="btn" id="cbadd">+ Ajouter</button></div>
+    <div id="cbcont">Chargement…</div>`);
+  document.getElementById("cbadd").onclick=modalAddCombo;
+  await loadCombos();
+}
+async function loadCombos(){
+  try{
+    const {combinations}=await api("/combinations");
+    document.getElementById("cbcont").innerHTML=`<div class="card" style="padding:0;overflow:auto">
+      <table><thead><tr><th>Taille</th><th>Statut</th><th>Contributions</th><th></th></tr></thead>
+      <tbody>${combinations.slice(0,200).map(c=>`<tr>
+        <td>${c.size}</td>
+        <td><span class="pill ${c.status==="available"?"green":c.status==="in_use"?"amber":"gray"}">${c.status}</span></td>
+        <td>${c.contribution_count||0}</td>
+        <td>${c.status!=="retired"?`<button class="btn sm ghost" data-cbid="${c.id}">Retirer</button>`:""}</td>
+      </tr>`).join("")}</tbody></table></div>`;
+    document.querySelectorAll("[data-cbid]").forEach(b=>b.onclick=async()=>{
+      try{await api("/combinations/"+b.dataset.cbid,{method:"PATCH",body:{status:"retired"}});toast("Retiré");await loadCombos();}
+      catch(e){toast(e.message,true);}
+    });
+  }catch(e){const el=document.getElementById("cbcont");if(el)el.innerHTML=`<div class="err">${e.message}</div>`;}
+}
+async function modalAddCombo(){
+  let elements=[];
+  try{const r=await api("/elements");elements=r.elements.filter(e=>e.status==="active");}catch{}
+  const opts=elements.map(e=>`<option value="${e.id}">[${e.category}] ${esc(e.name)}</option>`).join("");
+  modal(`<h2>Nouvelle combinaison</h2>
+    <div id="cberr"></div>
+    <div class="note">Sélectionnez 1 à 3 éléments (Ctrl/Cmd+clic pour plusieurs)</div>
+    <select class="field" id="cbell" multiple size="8" style="height:200px">${opts}</select>
+    <div class="row" style="margin-top:18px">
+      <button class="btn" id="cbok">Créer</button><button class="btn ghost" id="cbca">Annuler</button></div>`,
+  ()=>{},
+  async()=>{
+    const sel=[...document.querySelectorAll("#cbell option:checked")].map(o=>o.value);
+    if(!sel.length||sel.length>3){const el=document.getElementById("cberr");if(el)el.innerHTML=`<div class="err">1 à 3 éléments requis</div>`;return;}
+    try{await api("/combinations",{method:"POST",body:{combos:[sel]}});closeModal();toast("Créé");await loadCombos();}
+    catch(e){const el=document.getElementById("cberr");if(el)el.innerHTML=`<div class="err">${e.message}</div>`;}
+  });
+}
+
+// ── Config (SA) ───────────────────────────────────────────────────────────────
+async function pageConfig(){
+  m(`<h2 class="page-title">Configuration</h2><div id="cfcont">Chargement…</div>`);
+  try{
+    const {config}=await api("/config");
+    const rows=[
+      {k:"daily_target",         label:"Objectif quotidien (contributions)",type:"number"},
+      {k:"congrats_interval",    label:"Intervalle de félicitations",       type:"number"},
+      {k:"min_recording_seconds",label:"Durée min. enregistrement (s)",     type:"number"},
+      {k:"untranscribed_nudge_at",label:"Seuil nudge backlog",              type:"number"},
+      {k:"review_time_min_seconds",label:"Temps min. révision (s)",         type:"number"},
+      {k:"auto_reject_flags",    label:"Flags auto-rejet (JSON array)",     type:"text"},
+      {k:"fixit_messages",       label:"Messages fix-it (JSON object)",     type:"textarea"},
+      {k:"combo_size_dist",      label:"Distribution taille combinaisons (JSON)", type:"textarea"},
+      {k:"kill_recording",       label:"Bloquer enregistrements",           type:"bool"},
+      {k:"kill_transcription",   label:"Bloquer transcriptions",            type:"bool"},
+      {k:"kill_review",          label:"Bloquer révisions",                 type:"bool"},
+      {k:"notifications_paused", label:"Pause notifications",               type:"bool"},
+      {k:"progress_visible_to_users",label:"Progression visible par les users", type:"bool"},
+    ];
+    document.getElementById("cfcont").innerHTML=`<div class="card">
+      ${rows.map(r=>{
+        const v=JSON.stringify(config[r.k]??null).replace(/^"|"$/g,"");
+        if(r.type==="bool") return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)">
+          <label style="margin:0;flex:1;color:var(--ink)">${r.label}</label>
+          <input type="checkbox" id="cf_${r.k}" ${config[r.k]===true||config[r.k]==="true"?"checked":""} style="width:20px;height:20px;accent-color:var(--primary)">
+        </div>`;
+        if(r.type==="textarea") return `<div style="padding:10px 0;border-bottom:1px solid var(--line)">
+          <label style="color:var(--ink);margin-bottom:6px">${r.label}</label>
+          <textarea class="field" id="cf_${r.k}" style="height:70px;font-family:monospace;font-size:13px">${esc(v==="null"?"":v)}</textarea>
+        </div>`;
+        return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)">
+          <label style="margin:0;flex:1;color:var(--ink)">${r.label}</label>
+          <input class="field" id="cf_${r.k}" type="${r.type}" value="${esc(v==="null"?"":v)}" style="max-width:160px">
+        </div>`;
+      }).join("")}
+      <button class="btn" id="cfsave" style="margin-top:18px">Enregistrer tout</button></div>`;
+    document.getElementById("cfsave").onclick=async()=>{
+      const btn=document.getElementById("cfsave"); btn.disabled=true;
+      for(const r of rows){
+        const el=document.getElementById("cf_"+r.k); if(!el) continue;
+        let v; if(r.type==="bool") v=el.checked?"true":"false"; else v=el.value.trim();
+        try{await api("/config/"+encodeURIComponent(r.k),{method:"PUT",body:{value:v}});}catch{}
+      }
+      btn.disabled=false; toast("Enregistré");
+    };
+  }catch(e){document.getElementById("cfcont").innerHTML=`<div class="err">${e.message}</div>`;}
+}
+
+// ── Secrets (SA) ──────────────────────────────────────────────────────────────
+async function pageSecrets(){
+  m(`<h2 class="page-title">Clés secrètes</h2>
+    <div class="warn">Ces clés sont stockées dans D1 et ne sont jamais renvoyées au navigateur. Seuls les 4 derniers caractères sont affichés.</div>
+    <div class="card"><div id="seccont">Chargement…</div></div>
+    <div class="card" style="margin-top:0">
+      <div class="card-title">IDs des dossiers Google Drive</div>
+      <p class="muted" style="font-size:13px">Ces valeurs sont stockées dans la config (clés <code>drive_folder_main</code>, etc.) et utilisées par le Worker pour les sessions d'upload.</p>
+      ${["main","demo","deleted","rejected","trash"].map(f=>`
+        <div class="secret-row">
+          <span class="key">drive_folder_${f}</span>
+          <input class="field" id="df_${f}" placeholder="ID du dossier Drive" style="flex:1">
+          <button class="btn sm" data-folder="${f}">Enregistrer</button>
+        </div>`).join("")}
+    </div>`);
+  document.querySelectorAll("[data-folder]").forEach(b=>b.onclick=async()=>{
+    const k="drive_folder_"+b.dataset.folder;
+    const v=document.getElementById("df_"+b.dataset.folder).value.trim();
+    try{await api("/config/"+encodeURIComponent(k),{method:"PUT",body:{value:v}});toast("Enregistré");}
+    catch(e){toast(e.message,true);}
+  });
+  try{
+    const {status}=await api("/config/secrets-status");
+    const keys=[
+      {k:"secret.google_client_id",    label:"Google Client ID"},
+      {k:"secret.google_client_secret",label:"Google Client Secret"},
+      {k:"secret.google_refresh_token",label:"Google Refresh Token"},
+      {k:"secret.assemblyai_key",      label:"AssemblyAI Key"},
+    ];
+    document.getElementById("seccont").innerHTML=keys.map(sk=>`
+      <div class="secret-row">
+        <span class="key">${sk.label}</span>
+        <span class="secret-status ${status[sk.k]?.set?"":"unset"}">${status[sk.k]?.set?("…"+status[sk.k].last4):"Non défini"}</span>
+        <input class="field" id="sk_${sk.k}" type="password" placeholder="Nouvelle valeur" style="flex:1">
+        <button class="btn sm" data-skey="${sk.k}">Enregistrer</button>
+      </div>`).join("");
+    document.querySelectorAll("[data-skey]").forEach(b=>b.onclick=async()=>{
+      const v=document.getElementById("sk_"+b.dataset.skey).value.trim();
+      if(!v) return;
+      try{await api("/config/"+encodeURIComponent(b.dataset.skey),{method:"PUT",body:{value:v}});toast("Enregistré");pageSecrets();}
+      catch(e){toast(e.message,true);}
+    });
+  }catch(e){document.getElementById("seccont").innerHTML=`<div class="err">${e.message}</div>`;}
+}
+
+// ── Export (SA) ───────────────────────────────────────────────────────────────
+async function pageExport(){
+  m(`<h2 class="page-title">Exports de données</h2>
+    <div class="card">
+      <div class="card-title">Créer un snapshot</div>
+      <label>Label</label><input class="field" id="exlabel" placeholder="ex: training-v1">
+      <label>Niveau minimum de révision (0 = tous)</label><input class="field" id="exlvl" type="number" value="1" min="0" max="3">
+      <button class="btn" id="exgo" style="margin-top:14px">Créer le snapshot</button>
+      <div id="exres" style="margin-top:12px"></div>
+    </div>`);
+  document.getElementById("exgo").onclick=async()=>{
+    const btn=document.getElementById("exgo"); btn.disabled=true; btn.textContent="…";
+    try{
+      const d=await api("/admin/exports",{method:"POST",body:{label:val("exlabel"),criteria:{min_level:parseInt(val("exlvl")||"1")}}});
+      document.getElementById("exres").innerHTML=`<div class="note">Snapshot créé : <b>${d.frozen}</b> clips — ID : <code>${d.snapshot_id}</code></div>`;
+    }catch(e){document.getElementById("exres").innerHTML=`<div class="err">${e.message}</div>`;}
+    btn.disabled=false; btn.textContent="Créer le snapshot";
+  };
+}
+
+// ── Demo mode (SA) ────────────────────────────────────────────────────────────
+async function pageDemo(){
+  m(`<h2 class="page-title">Mode démo</h2><div id="democont">Chargement…</div>`);
+  try{
+    const {config}=await api("/config");
+    const on=config.demo_mode===true||config.demo_mode==="true";
+    document.getElementById("democont").innerHTML=`
+      <div class="card">
+        <p>Mode démo : <b>${on?"ACTIVÉ":"DÉSACTIVÉ"}</b></p>
+        ${on
+          ?`<button class="btn secondary" id="dmstop">Arrêter le mode démo</button>
+             <button class="btn danger" id="dmdestroy" style="margin-inline-start:10px">Détruire cette phase</button>
+             <div class="card-title" style="margin-top:22px">Migrer des contributions vers Main</div>
+             <p class="muted" style="font-size:13px">Entrez les IDs séparés par des virgules</p>
+             <textarea class="field" id="dmids" placeholder="id1,id2,…" style="height:80px"></textarea>
+             <button class="btn secondary" id="dmmig" style="margin-top:10px">Migrer la sélection</button>`
+          :`<input class="field" id="dmlabel" placeholder="Label de la phase (optionnel)" style="margin-bottom:10px">
+             <button class="btn" id="dmstart">Démarrer une phase démo</button>`}
+        <div id="dmres" style="margin-top:12px"></div>
+      </div>`;
+    if(on){
+      document.getElementById("dmstop").onclick=async()=>{
+        try{await api("/admin/demo/phases",{method:"POST",body:{action:"stop"}});toast("Mode démo arrêté");pageDemo();}
+        catch(e){toast(e.message,true);}
+      };
+      document.getElementById("dmdestroy").onclick=async()=>{
+        if(!confirm("Détruire toute la phase démo ? Les fichiers Drive seront déplacés vers trash.")) return;
+        try{
+          // get active phase — best effort
+          const d=await api("/admin/demo/destroy",{method:"POST",body:{phase_id:"active"}}).catch(()=>({}));
+          toast("Détruite");pageDemo();
+        }catch(e){toast(e.message,true);}
+      };
+      document.getElementById("dmmig").onclick=async()=>{
+        const ids=val("dmids").split(",").map(s=>s.trim()).filter(Boolean);
+        try{const d=await api("/admin/demo/migrate",{method:"POST",body:{contribution_ids:ids}});toast(`${d.migrated} migrée(s)`);}
+        catch(e){toast(e.message,true);}
+      };
+    }else{
+      document.getElementById("dmstart").onclick=async()=>{
+        try{await api("/admin/demo/phases",{method:"POST",body:{action:"start",label:val("dmlabel")}});toast("Mode démo démarré");pageDemo();}
+        catch(e){toast(e.message,true);}
+      };
+    }
+  }catch(e){document.getElementById("democont").innerHTML=`<div class="err">${e.message}</div>`;}
+}
+
+// ── Audit (SA) ────────────────────────────────────────────────────────────────
+async function pageAudit(){
+  m(`<h2 class="page-title">Journal d'audit</h2><div id="audcont">Chargement…</div>`);
+  try{
+    const {log}=await api("/admin/audit");
+    document.getElementById("audcont").innerHTML=`<div class="card" style="padding:0;overflow:auto">
+      <table><thead><tr><th>Acteur</th><th>Action</th><th>Cible</th><th>Date</th></tr></thead>
+      <tbody>${log.map(r=>`<tr>
+        <td style="font-size:13px">${esc(r.actor_name)}</td>
+        <td><code style="font-size:12px">${esc(r.action)}</code></td>
+        <td style="font-size:12px">${esc(r.target_type||"")} ${esc(r.target_id?.slice(0,8)||"")}</td>
+        <td style="font-size:12px;color:var(--muted)">${r.created_at?.slice(0,16)}</td>
+      </tr>`).join("")}</tbody></table></div>`;
+  }catch(e){document.getElementById("audcont").innerHTML=`<div class="err">${e.message}</div>`;}
+}
+
+// ── Modal helper ──────────────────────────────────────────────────────────────
+function modal(html, onCancel, onOk){
+  const bg=document.createElement("div"); bg.className="modal-bg";
+  const mo=document.createElement("div"); mo.className="modal";
+  mo.innerHTML=html; bg.appendChild(mo); document.body.appendChild(bg);
+  const close=()=>bg.remove();
+  bg.onclick=e=>{if(e.target===bg){close();if(onCancel)onCancel();}};
+  const okBtn =mo.querySelector("[id$=ok]");   if(okBtn &&onOk)     okBtn.onclick=onOk;
+  const caBtn =mo.querySelector("[id$=ca]");   if(caBtn&&onCancel)  caBtn.onclick=()=>{close();onCancel();};
+  window.closeModal=close;
+}
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+function m(html){ const el=document.getElementById("main"); if(el) el.innerHTML=html; }
+
+render();
+</script>
+</body>
+</html>
